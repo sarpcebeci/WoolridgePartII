@@ -1,0 +1,347 @@
+---
+title: "Woolridge_3"
+output: html_document
+---
+
+```{r}
+library(wooldridge)
+GPAres <- lm(colGPA~hsGPA+ACT, data = gpa1)
+summary(GPAres)
+
+summary(lm(log(wage)~educ+exper+tenure, data = wage1))
+
+summary(lm(prate~mrate + age, data = k401k))
+
+summary(lm(narr86~pcnv + ptime86 + qemp86, data = crime1))
+summary(lm(narr86~pcnv + avgsen + ptime86 + qemp86, data = crime1))
+
+summary(lm(log(wage)~educ, data = wage1))
+```
+
+```{r}
+beta.hat <- coef(lm(colGPA ~ ACT + hsGPA, data = gpa1))
+delta.tilde <- coef(lm(hsGPA~ ACT, data = gpa1))
+beta.hat["ACT"] + beta.hat["hsGPA"]*delta.tilde["ACT"]
+lm(colGPA~ ACT, data = gpa1)
+```
+
+```{r}
+res <- lm(colGPA ~ hsGPA + ACT, data = gpa1)
+summary(res)
+(SER <- summary(res)$sigma)
+
+(R2.hsGPA <- summary(lm(hsGPA~ ACT, data = gpa1))$r.squared)
+
+(VIF.hsGPA <- 1/(1-R2.hsGPA))
+
+n <- nobs(res)
+
+sdx <- sd(gpa1$hsGPA) * sqrt((n-1)/n)
+
+(SE.hsGPA <- 1/sqrt(n) * SER/sdx * sqrt(VIF.hsGPA))
+```
+
+
+```{r}
+### C3
+#i
+## Positive
+#ii
+## Yes negatively Generally poor people tend to smoke cigarette
+#iii
+summary(lm(bwght$bwght~bwght$cigs+bwght$faminc))
+summary(lm(bwght$bwght~bwght$cigs))
+cor(bwght$cigs, bwght$faminc)
+
+### ** try to understand correlation on affects of the variables
+```
+
+
+```{r}
+### C2
+#i 
+summary(lm(hprice1$price~hprice1$sqrft+hprice1$bdrms))
+#ii 
+## 15 thıusand
+#iv
+## 63%
+
+```
+
+```{r}
+### C3
+#i
+ceo_reg <- lm(log(ceosal2$salary)~log(ceosal2$sales) + log(ceosal2$mktval))
+summary(ceo_reg)
+#ii
+## we can't add profits in log since some profits are negative
+ceo_reg2 <- lm(log(ceosal2$salary)~log(ceosal2$sales) + log(ceosal2$mktval) + ceosal2$profits)
+summary(ceo_reg2)
+## not most of the data
+#iii 
+ceo_reg3 <- lm(log(ceosal2$salary)~log(ceosal2$sales) + log(ceosal2$mktval) + ceosal2$profits + ceosal2$ceoten)
+summary(ceo_reg3)
+## 1 % 
+#iv 
+cor(log(ceosal2$mktval), ceosal2$profits)
+## this increased the standard errors of our estimators
+```
+
+```{r}
+### C4
+#i
+summary(attend$atndrte)
+summary(attend$priGPA)
+summary(attend$ACT)
+#ii
+summary(lm(attend$atndrte~ attend$priGPA + attend$ACT))
+## It says without other variable's effect students attend 75.7%
+#iii
+## Yes. ACT score
+```
+
+
+```{r}
+### C5 
+wage1_reg1 <- lm(wage1$educ~wage1$exper+wage1$tenure)
+res1 <- wage1_reg1$residuals
+wage1_reg2 <- lm(log(wage1$wage)~res1)
+summary(wage1_reg1)
+summary(wage1_reg2)
+wage1_reg3 <- lm(log(wage1$wage)~wage1$educ+wage1$exper+wage1$tenure)
+summary(wage1_reg3)
+0.09203
+```
+
+
+```{r}
+### C6
+wage2
+#i
+wage2_reg <- lm(IQ~educ, data = wage2)
+rr <- wage2_reg$coefficients["educ"]
+#ii
+wage2_reg2 <- lm(log(wage)~educ, data = wage2)
+rt <- wage2_reg2$coefficients["educ"]
+#iii
+wage2_reg3 <- lm(log(wage)~educ + IQ, data = wage2)
+ry <- wage2_reg3$coefficients[c("educ")]
+ru <- wage2_reg3$coefficients[c("IQ")]
+rt == ry + ru * rr
+```
+
+
+```{r}
+### C7
+#i 
+meap93
+meap_reg <- lm(math10~log(expend)+lnchprg, data = meap93)
+summary(meap_reg)
+## no. I think the reason is lncprg for poor students and they do worse.
+#ii
+## it's negative so it says math highly depends on expend. If there is no expend math score is negative which is not logical.
+## Yes it does
+#iii
+meap_reg1 <- lm(math10~log(expend), data = meap93)
+summary(meap_reg1)
+## larger
+#iv
+cor(log(meap93$expend), meap93$lnchprg)
+## Yes it does richer kids don't need lunch program.
+#v
+## I think simple regression provides better slope estimate. 
+## Because of the correlation.
+```
+
+
+```{r}
+### C8
+#i
+summary(discrim$prpblck)
+summary(discrim$income)
+discrim 
+#ii
+summary(lm(psoda~prpblck+income, data = discrim))
+summary(discrim$psoda)
+# Yes. It's large
+#iii
+summary(lm(psoda~prpblck, data = discrim))
+## Larger. Poor regions may affect. 
+#iv
+summary(lm(log(psoda)~prpblck+log(income), data = discrim))
+beta.prpblckIV <- 0.12158 
+0.12158 * 0.2 * 100
+#v
+summary(lm(log(psoda)~prpblck+log(income)+prppov, data = discrim))
+beta.prpblckV <- 0.07281
+## prpblck got decreased. It seems like rather than black/white 
+## it's about poor areas. 
+#vi
+cor(log(discrim$income[-385]), discrim$prppov[-385])
+## REgarding the multicollinearity it increase variance of the estimator
+```
+
+
+
+```{r}
+library(Ecdat)
+?Caschool
+summary(Caschool$str )
+hist(Caschool$str)
+hist(Caschool$testscr)
+testscr
+summary(lm())
+Caschool %>%
+  ggplot()+
+  geom_point(aes(x= str, y=testscr))+
+  geom_smooth(aes(x= str, y=testscr),method="lm")
+
+Caschool %>%
+  ggplot()+
+  geom_histogram(aes(x= str))+
+  stat_function(fun = dnorm)
+
+nor <- dnorm(Caschool$str, mean(Caschool$str), sd(Caschool$str))
+
+cor(Caschool$str,Caschool$testscr)
+
+hist_dist <- function(data) {   
+myhist <- hist(data)
+multiplier <- myhist$counts / myhist$density
+mydensity <- density(data) 
+mydensity$y <- mydensity$y * multiplier[1]
+plot(myhist)
+lines(mydensity)
+}
+
+```
+
+
+
+```{r}
+### C9
+#i
+attach(charity)
+summary(lm(gift~mailsyear+giftlast+propresp))
+charity$propresp
+summary(lm(gift~mailsyear))
+#ii
+##mailsyear's coefficient got decreased and out sd got decrease
+#iii
+##100% increases 15 for example 50% increases 7.5
+#iv
+summary(lm(gift~mailsyear+giftlast+propresp+avggift))
+## mailsyear from 2.16 to 1.12. sneding more gifts increasese avg gift also. this makes sense
+#v
+## giftlast for the first 0.005927 
+## giftlast for the second -0.26086
+## after average gift added to the model it turns out lastgift isn't that important. Instead of the last your average gift more important
+detach(charity)
+```
+
+
+```{r}
+### C10
+#i
+attach(htv)
+htv
+summary(educ)
+## 6 to 20
+## dataset's education percentages
+htv %>%
+  group_by(educ) %>%
+  summarise(count = n(),
+            tot=nrow(htv)) %>%
+  mutate(perc = count / tot)
+## comparison with father's education
+htv
+htv %>%
+  mutate(fameduc=(motheduc+fatheduc)/2 ) %>%
+  summarise(men_educ = mean(educ),
+            fam_educ = mean(fameduc))
+# men's educ is higher
+#ii
+summary(lm(educ~motheduc+fatheduc))
+## 0.2493 explained 
+#iii
+summary(lm(educ~motheduc+fatheduc+abil))
+## yes it does. It increases R squared to 0.4275
+#iv
+abil_sqr <- abil^2
+summary(lm(educ~motheduc+fatheduc+abil+abil_sqr))
+abill <- 0.401462 + 2 * 0.050599 
+abill = 0.50266
+## also second derivative is positive which is 0.050599
+#v
+abil > abill
+## ability explains a lot but not describe the whole picture for policy uses ## it is good to hear that 
+## investing on other areas may be benefical
+#vi
+library(mosaic)
+fun <- makeFun(8.240226 + 0.190126 * 12.18 + 0.108939 * 12.45 + 
+                 0.401462 * abil + .050599 * abil^2~abil)
+summary(abil)
+plotFun(fun, xlim = range(-5.6315,6.2637))
+detach(htv)
+```
+
+
+```{r}
+### C11
+attach(meapsingle)
+#i
+meapsingle
+summary(lm(math4~pctsgle))
+## large nearly decrease 1 for 1 increase
+#ii
+summary(lm(math4~pctsgle+lmedinc+free))
+## decreased 60%
+#iii
+cor(lmedinc, free)
+## they have strong negative correlation
+#iv
+## Yes it would may produce better outcome but not necessary
+#v
+VIF = 1/(1-R^2)
+## R2j is obtained from a regression involving only the independent variables in the original model, where xj plays the role of a dependent variable.
+
+summary(lm(pctsgle~lmedinc+free))
+VIF_pct <- 1/(1-0.8258)
+summary(lm(lmedinc~free+pctsgle))
+VIF_med <- 1/(1-0.7572)
+summary(lm(free~lmedinc+pctsgle))
+VIF_pct <- 1/(1-0.6863)
+## VIF_pct is the biggest. Excluding that might be better
+detach(meapsingle)
+```
+
+
+```{r}
+### C12
+#i
+attach(econmath)
+## final score is percentage
+sum(score == 100) ## None of the students
+summary(score)
+summary(actmth)
+summary(acteng)
+#ii
+summary(lm(score~colgpa+actmth+acteng))
+#iii
+## math
+#iv
+## it is .4 explains the data. not perfectly but good enough to 
+## make inferences
+detach(econmath)
+```
+
+
+
+
+
+
+
+
+
+
+

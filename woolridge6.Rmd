@@ -1,0 +1,650 @@
+---
+title: "Wooolridge6"
+output: html_document
+---
+
+```{r}
+
+library(wooldridge)
+library(tidyverse)
+
+```
+
+
+```{r}
+
+ceosal1 %>%
+  lm(data = .,
+     formula = log(salary)~log(sales)+roe+I(roe^2)) %>%
+  summary()
+
+
+```
+
+
+```{r}
+
+rdchem %>% 
+  lm(data = .,
+     formula = rdintens~sales+I(sales^2)) %>% 
+  summary()
+rdchem$sales %>% summary()
+uniroot(function(x){3.006e-04 + 2 * -6.946e-09 * x}, interval = c(42, 39709))
+3.006e-04 + 2 * -6.946e-09 * 21639
+
+rdchem %>%
+  mutate(salesbil = sales / 1000) %>%
+  lm(data = .,
+     formula = rdintens~salesbil+I(salesbil^2)) %>% 
+  summary()
+
+```
+
+
+
+```{r}
+attend %>% 
+  lm(data = .,
+     formula = stndfnl~atndrte+priGPA+ACT+
+       I(priGPA^2)+I(ACT^2)+priGPA*atndrte) %>%
+  summary()
+
+attend %>% 
+  lm(data = .,
+     formula = stndfnl~atndrte+priGPA+ACT+
+       I(priGPA^2)+I(ACT^2)+priGPA*atndrte+
+       I(atndrte^2)+ACT*atndrte) %>%
+  summary()
+
+R_ur <- 0.2315
+R_r <- 0.2287
+q <- 2 
+dfR <- 671
+x <- ((R_ur - R_r)/q)/((1-R_ur)/dfR)
+pf(x, q, dfR, lower.tail = F)
+
+```
+
+
+```{r}
+# C1
+
+kielmc81 <- subset(kielmc, year == 1981)
+kielmc81
+
+# i effect of incinerator location 
+# I expect minus
+kielmc81 %>% lm(data = .,
+                formula = log(price)~log(dist)) %>%
+  summary()
+# :) it says being close to incinerator increase the price 0.36%
+# ii
+kielmc81 %>% lm(data = .,
+                formula = log(price)~log(dist)+log(intst)+
+                  log(area)+log(land)+rooms+baths+age) %>%
+  summary()
+# still positive but insignificant 
+# iii
+kielmc81 %>% lm(data = .,
+                formula = log(price)~log(dist)+log(intst)+I((log(intst))^2)+
+                  log(area)+log(land)+rooms+baths+age) %>%
+  summary()
+# effect of distance to interstate has diminishing marginal value 
+# iv 
+# yes it is
+```
+
+
+```{r}
+
+# C2
+# i 
+wage1 %>% 
+  lm(data = .,
+     formula = log(wage)~educ+exper+I(exper^2)) %>% 
+  summary()
+# ii
+# Yes it is 
+# iii 
+(change_wage <- 100 * (0.0410089 + 2 * -0.0007136) * 7) 
+## 27 per cent increases
+# iv
+0.0410089 / (2 * 0.0007136) 
+## after 29 years old exper's efect becomes negative
+
+```
+
+```{r}
+
+# C3
+# i 
+
+# ii
+## H0: B3 = 0 Ha: B3 > 0
+# iii
+wage2 %>% 
+  lm(data = .,
+     formula = log(wage)~educ+exper+educ*exper) %>% 
+  summary()
+## We reject H0 at 5% sig. level
+# iv 
+wage2 %>% 
+  lm(data = .,
+     formula = log(wage)~educ+exper+educ*I(exper-10)) %>% 
+  summary()
+conf_int <- c(0.076080 - 0.006615 * qnorm(0.05, lower.tail = F),
+              0.076080 + 0.006615 * qnorm(0.05, lower.tail = F))
+conf_int
+# Never forget that thanks to asymptotic properties, we use estimator and se for conf interval
+```
+
+
+```{r}
+
+# C4
+# i
+gpa2 %>% 
+  lm(data = ., 
+     formula = sat ~ hsize + I(hsize^2)) %>% 
+  summary()
+## Yes it is 
+ggplot(gpa2, aes(hsize, sat)) + geom_point()+ geom_smooth(data = gpa2,
+                                                          method = lm, 
+                                                          formula =y ~ x + I(x^2))
+# ii
+## We know that at B1 / 2B2 we reach to the top 
+abs(19.814 / (2*-2.131)) 
+## Lets stop after 4640 
+ggplot(gpa2, aes(hsize, sat)) + geom_point()+ 
+  geom_smooth(data = gpa2,method = lm, formula =y ~ x + I(x^2))+ 
+  geom_vline(xintercept = 4.64)
+# iii 
+## no it's not as we see from the preivous graph after the line we observe some students 
+## continued perform better
+# iv 
+gpa2 %>% 
+  lm(data = ., 
+     formula = log(sat) ~ hsize + I(hsize^2)) %>% 
+  summary()
+abs(0.0196029/(2*0.0020872)) 
+## No they are approximately same
+
+```
+
+
+```{r}
+# C5
+# i
+hprice1 %>%
+  lm(data = .,
+     formula = log(price)~log(lotsize)+log(sqrft)+bdrms) %>% summary()
+
+reg <- hprice1 %>%
+  lm(data = .,
+     formula = log(price)~log(lotsize)+log(sqrft)+bdrms) 
+predicted <- function(lotsize, sqrft, bdrms){
+  -1.29704 + 0.16797 * log(lotsize) + 0.70023 * log(sqrft) + 0.03696 * bdrms
+}
+predicted(20000, 2500, 4)
+
+alpha_hat <- sum(exp(reg$residuals)) / nrow(hprice1) 
+pred_y <- alpha_hat * exp(5.992921)
+pred_y
+
+
+### Predicting y when dependent variable in log form:
+## 1. Find alpha hat 
+alpha_hat <- sum(exp(reg$residuals)) / nrow(hprice1)
+## 2. Mulitply alpha_hat with the predicted log(y_hat)
+
+# iii
+hprice1 %>%
+  lm(data = .,
+     formula = price~log(lotsize)+log(sqrft)+bdrms) %>% summary()
+## Adjusted R-squared:  0.6663 , for first part : Adjusted R-squared:  0.6302
+## I prefer the one in iii because adjusted R sguared slightly better. Also 
+## bdrms and intercept gains signifcance under that model
+
+```
+
+
+```{r}
+# C6 
+# i 
+vote1 %>% 
+  lm(data = .,
+     formula = voteA~ prtystrA+expendA+expendB+expendA*expendB) %>% 
+  summary()
+# Partial effect of B's expenditure
+-3.172e-02 + 1 * -6.629e-06
+# Partial effect of A's expenditure
+3.828e-02 + 1 * -6.629e-06
+## No it's not
+# ii
+## No it's not 
+# iii
+mean(vote1$expendA) # = 310 
+(-3.172e-02 + 300 * -6.629e-06) * 100 # = -3.37087
+## No this not a large effect - 6% of the mean
+# iv 
+(3.828e-02 + 100 * -6.629e-06) * 100 # = 3.76171
+## Yes it does
+# v 
+vote1 %>% 
+  lm(data = .,
+     formula = voteA~ prtystrA+expendA+expendB+shareA) %>% 
+  summary()
+## No we can't actually. If we keep them constant we cannot see the difference in ShareA
+
+```
+
+
+```{r}
+# C7
+# i
+-1.63 + 2 * .296 * 2.59 + .0056 * 82 # = 0.36248 
+## 1 increase in priGPA increase final by 0.36
+summary(attend)
+# ii 
+attend %>% 
+  lm(data = .,
+     formula = stndfnl~atndrte+priGPA+ACT+I((priGPA - 2.59)^2)+
+       I(ACT^2)+priGPA*I(atndrte - 82)) %>% summary()
+
+0.077697 # se for = 0.36248 
+# iii 
+## they are basically adjusted to the other's average. 
+
+```
+
+
+```{r}
+# C8
+# i 
+hprice1 %>% 
+  lm(data = .,
+     formula = price ~ lotsize + sqrft + bdrms)
+y0 <- (-21.770308 + 0.002068 * 10000 + 0.122778 * 2300 + 13.852522 * 4) %>% round
+# ii 
+hprice1 %>% 
+  lm(data = .,
+     formula = price ~ I(lotsize-10000) + I(sqrft-2300) + I(bdrms-4)) %>% summary()
+reg <- hprice1 %>% 
+  lm(data = .,
+     formula = price ~ I(lotsize-10000) + I(sqrft-2300) + I(bdrms-4)) 
+reg %>% summary()
+int <- c(3.367e+02 - qt(.025, df = 84, lower.tail = F) *7.374e+00,
+         3.367e+02 + qt(.025, df = 84, lower.tail = F) *7.374e+00)
+int
+
+# iii 
+se_y0 <- 7.374
+se_e0 <- sqrt(se_y0^2 + 59.83^2)
+interval <-  c(y0 - qt(.025, df = 84, lower.tail = F) * se_e0, 
+               y0 + qt(.025, df = 84, lower.tail = F) * se_e0)
+interval
+
+```
+
+```{r}
+# C9
+nbasal
+# i 
+nbasal %>% lm(data = .,
+              formula = points ~ exper + age + coll + I(exper^2)) %>%
+  summary()
+# ii
+abs(2.36363 / (2*-0.07703)) # 15 years
+## Yes it does. Espacially players use their physics struggle to point more in thier post career
+# iii
+nbasal %>% 
+  group_by(coll) %>% 
+  summarise(count = n(),
+            avg = mean(points))
+## averagely worse players tend to have 4 year college. So they don't get drafted 
+## or don't seem sufficient to nba to be drafted
+# iv
+nbasal %>% lm(data = .,
+              formula = points ~ exper + age + coll + 
+                I(exper^2) + I(age^2)) %>%
+  summary()
+## age decreases the point predicted but its decreasing gets smaller with player 
+## aged.
+# v 
+nbasal %>% 
+  lm(data = ., 
+     formula = log(wage)~ points + exper + I(exper^2)+ age + coll) %>%
+  summary()
+R_ur <- 0.4878
+nbasal %>% 
+  lm(data = ., 
+     formula = log(wage)~ points + exper + I(exper^2)) %>%
+  summary()
+R_r <- 0.4832
+F_stat <- ((R_ur - R_r) / 2 )/
+  ((1 - R_ur) / 263)
+F_stat
+pf(F_stat, 2, 263, lower.tail = F) # = 0.3085991 
+## We cannot reject H0 so they jointly insginificant
+
+
+```
+
+```{r}
+# C10
+# i 
+bwght2 %>% 
+  lm(data = .,
+     formula = bwght ~ npvis + npvissq) %>% 
+  summary()
+## Yes under 2% significance level
+# ii 
+abs(40.2073 / (-0.8509 * 2))
+nrow(subset(
+  bwght2, npvis >= 22
+)) # = 21
+# iii 
+## More prenatal vist may be mean truoble for the pregnant 
+bwght2 %>% 
+  lm(data = .,
+     formula = bwght ~ npvis + npvissq + + fage + I(fage^2)) %>% 
+  summary()
+
+abs(22.4521/(2*.2419)) # = 46 
+nrow(subset(
+  bwght2, fage >= 46
+)) # 38
+# v 
+## no not at all
+# vi
+## Normal form: 0.01579
+bwght2 %>% 
+  lm(data = .,
+     formula = log(bwght) ~ npvis + npvissq + + fage + I(fage^2)) %>% 
+  summary()
+## Log form: .0236
+## Log form slightly better
+
+```
+
+
+```{r}
+# C11
+# i 
+apple %>% lm(data = ., 
+             formula = ecolbs ~ ecoprc + regprc) %>% 
+  summary()
+## With the law of demand we have negative efect of the price 
+## regular apples must be the substitute so quantity of apple's sold increases
+
+ggplot(apple, aes(y = ecoprc, x = ecolbs)) + geom_point()
+# ii
+## Yes they are
+# iii 
+reg <- apple %>% lm(data = ., 
+             formula = ecolbs ~ ecoprc + regprc)
+reg$fitted.values %>% summary() # 0.8 - 2.09 
+count(apple, ecolbs) 
+248 / nrow(apple) # 38%
+# iv 
+## No not at all 
+# v 
+apple %>% lm(data = ., 
+             formula = ecolbs ~ ecoprc + regprc + 
+               faminc + hhsize + educ + age) %>% 
+  summary()
+
+
+# vi 
+apple %>% 
+  lm(data = .,
+     formula = ecolbs ~ ecoprc) %>% summary()
+
+apple %>% 
+  lm(data = .,
+     formula = ecolbs ~ regprc) %>% summary()
+## they are same with smaller effects
+cor(apple$ecoprc, apple$regprc) ## THEY HIGHLY CORRELATED
+## They increase their effects
+
+## vii 
+## reglbs not belongs te important concept in economics is relative prices
+
+
+```
+
+
+```{r}
+# C12
+# i
+a <- k401ksubs %>% 
+  filter(fsize == 1)
+a$age %>% hist() # it's 25 more than 500 people
+# ii 
+?k401ksubs
+a %>% 
+  lm(data = .,
+     formula = nettfa ~ inc + age + I(age^2)) %>% summary()
+# iii
+abs(-1.321815 / (2*0.025562)) 
+## No I did not because after 25 it starts to increase
+# iv 
+a %>% 
+  lm(data = .,
+     formula = nettfa ~ inc + age + I((age^2 - 50*age))) %>% summary()
+## We reject null hypothesis
+## ADJ R 0.1216 
+# v
+a %>% 
+  lm(data = .,
+     formula = nettfa ~ inc + I((age^2 - 50*age))) %>% summary()
+## adj R = 0.122
+## Yes it slightly does
+# vi
+x <- function(y){-1.204212 + 0.824816 * 30 + 0.025562 * ((y^2 - 50 * y))}
+
+x_values <- c(25:70)
+y_values <- x(x_values)
+plot(x = x_values, y = y_values, type = "l")
+## there is an increase in nettfa, w,th increasing returns
+# vii
+a %>% 
+  lm(data = .,
+     formula = nettfa ~ inc + I(inc^2) + I((age^2 - 50*age))) %>% summary()
+# No it is not nevessary
+
+```
+
+```{r}
+# C13
+# i
+reg <- meap00_01 %>% 
+  lm(data = .,
+     formula = math4 ~ lexppp+lenroll+lunch) 
+reg %>% 
+  summary()
+## Except lexppp, yes they are 
+# ii
+reg$fitted.values %>% summary() 
+meap00_01$math4 %>% summary()
+## we don't have 0 and 100 in fitted values
+# iii
+data.frame(residuals = reg$residuals,
+           fitted = reg$fitted.values,
+           id = meap00_01$bcode,
+           math4 = meap00_01$math4) %>% 
+  arrange(desc(residuals))
+## Biggest residuals are outliers or the higher values than 92 
+# iv 
+reg2 <- meap00_01 %>% 
+  lm(data = .,
+     formula = math4 ~ lexppp+I(lexppp^2)+ lenroll+
+       I(lenroll^2)+ lunch+I(lunch^2)) 
+reg2 %>% summary()
+## Yes leaving will be better
+# v 
+reg3 <- meap00_01 %>% 
+  lm(data = .,
+     formula = I(math4/sd(math4)) ~ I(lexppp/sd(lexppp))+
+       I(lenroll/sd(lenroll))+I(lunch/sd(lunch))) 
+reg3 %>% summary()
+## Lunch
+meap00_01 %>% ggplot(aes(lunch, math4))+ geom_point()
+# MAybe the negative effect of lunch comes from lunch is for poor districts 
+# and richer districts students has better advantages in life
+
+```
+
+```{r}
+# C14
+# i
+benefits %>%
+  lm(data = .,
+     formula = lavgsal~bs) %>% 
+  summary()
+## WE can reject
+pnorm((-0.50346-(-1))/0.16615, lower.tail = F)  
+## We can reject also 
+## p-value = 0.001401732
+# ii 
+benefits$lbs = log(benefits$bs)
+summary(benefits)
+sd(benefits$bs)
+sd(benefits$lbs) # sd increased
+# iii
+benefits %>%
+  lm(data = .,
+     formula = lavgsal~lbs) %>% summary() # R_adj = 0.003367, was 0.00441  so decreased
+# iv
+benefits %>%
+  lm(data = .,
+     formula = lavgsal~bs+lenroll+lstaff+lunch) %>% 
+  summary()
+# We can now reject H0 only at 15%
+# v
+## with more people budget splits more? 
+# vi
+benefits %>%
+  lm(data = .,
+     formula = lavgsal~bs+lenroll+lstaff+lunch+I(lunch^2)) %>% 
+  summary()
+## Yes it is
+abs(-3.600e-03 / (2 * 3.178e-05)) # 57
+summary(benefits$lunch) # it is on the range around the 3rd quantile
+subset(benefits, lunch > 56.6) # 418 
+ggplot(benefits, aes(lunch, lavgsal))+ geom_point()+ geom_smooth()
+# vii
+## poorer areas -> lower salaries
+
+?benefits
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

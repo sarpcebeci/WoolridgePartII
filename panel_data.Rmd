@@ -1,0 +1,372 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+Packages: 
+```{r}
+library(tidyverse)
+library(wooldridge)
+library(skimr)
+library(tidymodels)
+library(plm)
+library(stargazer)
+library(lmtest)
+```
+
+# Chapter 13
+##2
+```{r}
+df = kielmc
+skim(df)
+```
+
+```{r}
+model <- lm(lprice ~ nearinc +y81*nearinc, data = subset(kielmc, year %in% c(1978,1981)))
+summary(model)
+```
+
+```{r}
+model <- lm(lprice ~ nearinc + y81 + y81*nearinc, data = subset(kielmc, year %in% c(1978,1981)))
+summary(model)
+
+```
+
+# From: https://www.youtube.com/watch?v=2igMNODFypk&t
+
+```{r}
+df =crime4
+#dim(df)
+
+df.p <- pdata.frame(df, index = c("county", "year"))
+
+ols_model <- lm(crmrte ~ taxpc + avgsen + west + central + 
+                  polpc + wcon,
+                data = df)
+
+summary(ols_model)
+```
+
+```{r}
+## fixed is within model
+fixed_ef <- plm(log(crmrte) ~ polpc, data = df.p,
+                model = "within")
+#summary(fixed_ef)
+stargazer(fixed_ef, type = "text")
+
+```
+
+```{r}
+## Random effects model: 
+### Each individual county has intercept and 
+### follows a normal distribution over indivduals 
+
+random_ef <- plm(log(crmrte) ~ polpc, data = df.p,
+                model = "random")
+#summary(fixed_ef)
+stargazer(random_ef, type = "text")
+```
+
+```{r}
+# difference model. takes each year and subtract before
+
+first_diff_ef <- plm(log(crmrte) ~ polpc, data = df.p,
+                model = "fd")
+#summary(fixed_ef)
+stargazer(first_diff_ef, type = "text")
+```
+
+```{r}
+# Hausman Test
+
+phtest(fixed_ef, random_ef)
+## we favor fixed effects in this scenario
+```
+
+```{r}
+phtest(random_ef, fixed_ef)
+```
+
+
+```{r}
+# fixed effect with a lag
+fixed_ef_lag <- plm(log(crmrte) ~ lag(log(crmrte)) + polpc, data = df.p,
+                model = "within")
+stargazer(fixed_ef_lag, type = "text")
+```
+
+
+
+```{r}
+# Cluster se
+
+coeftest(fixed_ef, vcovHC(fixed_ef, type = "HC0", 
+                          cluster = "group") )
+
+
+```
+
+#Woolridge_13
+## 5th Question
+```{r}
+rental %>% skim()
+model <- lm(lrent ~ y90 + lpop + lavginc + pctstu, 
+            data = rental)
+stargazer(model, type = "text")
+
+# i: pctsu= 0.005
+
+# diff model
+
+rental.p <- pdata.frame(rental, index = c("city", "y90"))
+model_diff <- plm(lrent ~ y90 + lpop + lavginc + pctstu, 
+            data = rental.p, model = "fd")
+stargazer(model_diff, type = "text")
+
+coeftest(model_diff, vcovHC(model_diff, type = "HC0", 
+                          cluster = "group") )
+
+
+
+```
+
+## 6th Question
+```{r}
+crime3 %>% skim()
+crime3.p <- pdata.frame(crime3,index = c("district"))
+
+model <- plm(lcrime ~  clrprc1 + clrprc2, 
+             data = crime3.p, model = "fd")
+stargazer(model, type = "text")
+
+model <- plm(lcrime ~ clrprc1 + I(clrprc1 + clrprc2), 
+             data = crime3.p, model = "fd")
+stargazer(model, type = "text")
+
+model <- plm(lcrime ~ avgclr, 
+             data = crime3.p, model = "fd")
+stargazer(model, type = "text")
+
+# adj R^2 = 0.159
+
+
+```
+
+## 7th Question
+```{r}
+gpa3 %>% 
+  filter(term == 2) %>%
+  mutate(lgpa = log(cumgpa)) %>%
+  ggplot(aes(lgpa)) + 
+  geom_histogram()
+gpa3 %>% skim()
+model <- lm(trmgpa ~ spring + sat + hsperc + female + black +
+              white + frstsem + tothrs + crsgpa + season,
+            data = gpa3)
+
+stargazer(model, type = "text")
+tidy(model)
+
+# season t:-0.5564234	p-val:5.780941e-01
+vector <- c()
+for (i in c(1:366)) {
+  index1 = 2 * i - 1
+  index2 = 2 * i
+  vector[index1] = i
+  vector[index2] = i
+  
+}
+vector
+
+gpa3$sid <- vector
+gpa3.p <- pdata.frame(gpa3, index = c("sid","term"))
+
+model <- lm(trmgpa ~ spring + sat + hsperc + female + black +
+              white + frstsem + tothrs + crsgpa + season,
+            data = gpa3)
+
+model <- plm(trmgpa ~  frstsem + tothrs + crsgpa + season,
+             data = gpa3.p, model= "fd")
+
+stargazer(model, type = "text")
+
+
+```
+
+#8th Question
+```{r}
+# for differencing you can use lm !!!!
+vote2.p <- pdata.frame(vote2, index = c("state", "district"))
+model <- lm(cvote ~ clinexp + clchexp + cincshr,
+             data = vote2)
+stargazer(model, type = "text")
+
+model <- lm(cvote ~ clinexp + clchexp,
+             data = vote2)
+stargazer(model, type = "text")
+```
+
+
+
+# Woolridge 14
+## 1)
+```{r}
+df = rental
+str(df)
+df1 = pdata.frame(df, index = c("city", "year"))
+```
+
+```{r}
+pooled_ols <- lm(lrent ~ y90 + lpop + lavginc + pctstu,
+                 data = df1)
+fd <- plm(lrent ~ y90 + lpop + lavginc + pctstu,
+                 data = df1, model = "fd")
+fe <- plm(lrent ~ y90 + lpop + lavginc + pctstu,
+                 data = df1, model = "within" )
+stargazer(pooled_ols, fd, fe, type = "text")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

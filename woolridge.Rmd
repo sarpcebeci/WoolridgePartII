@@ -1,0 +1,337 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ivreg)
+mroz
+ivreg(data = mroz, 
+        log(wage)~educ | fatheduc) %>%
+  summary()
+
+
+```
+
+```{r echo=FALSE}
+?bwght
+plot(x = bwght$cigs, y = bwght$bwght)
+table(bwght$cigs)
+
+
+# when variables are 0,1 it makes it dummy variable
+lm(data = bwght,
+   formula = log(bwght)~ cigs + log(faminc) + parity + male + white)
+
+bwght %>% 
+  mutate(gender = as.factor(ifelse(male == 1, "Male", "Female"))) %>% 
+  ggplot(aes(x = gender, y = bwght, fill = gender)) + geom_boxplot()
+
+skimr::skim(bwght)
+```
+
+
+```{r}
+gpa2 
+skimr::skim(gpa2)
+lm(data = gpa2,
+   formula = sat ~ hsize + I(hsize^2) + female + black + female * black) %>% 
+  summary()
+abs(19.2971 / (2 * -2.1948))
+gpa2 %>% 
+  ggplot(aes(x = hsize, y = sat)) + geom_point()
+
+```
+
+```{r}
+poverty_line = 60
+incomes = c(59,100,45,55,140)
+### 0: Headcount Ratio, 1: Poverty Gap Index, 2: Poverty Severity
+alpha = 2
+poors = incomes[incomes < poverty_line]
+fgt = sum(((poverty_line - poors)/poverty_line)^alpha) / length(incomes)
+fgt
+
+
+
+```
+
+
+```{r}
+poverty_line = 30
+incomes = c(51,37,57,23,45,27,20,66,29,70)
+### 0: Headcount Ratio, 1: Poverty Gap Index, 2: Poverty Severity
+alpha = 1
+poors = incomes[incomes < poverty_line]
+fgt = sum(((poverty_line - poors)/poverty_line)^alpha) / length(incomes)
+fgt
+
+
+
+```
+
+
+
+```{r}
+incomes1 <- c(51,37,57,23,45,27,20,66,29,70) 
+poverty_line = 30
+## 1: Headcount Ratio, 2: Poverty Gap, 3: Poverty Severity
+ineq::pov(incomes1, poverty_line, parameter = 1, type = "Foster")
+ineq::pov(incomes1, poverty_line, parameter = 2, type = "Foster")
+ineq::pov(incomes1, poverty_line, parameter = 3, type = "Foster")
+
+```
+
+
+```{r}
+incomes2 <- c(12,33,45,18,48,66,15,78,31,34) 
+poverty_line = 30
+## 1: Headcount Ratio, 2: Poverty Gap, 3: Poverty Severity
+ineq::pov(incomes2, poverty_line, parameter = 1, type = "Foster")
+ineq::pov(incomes2, poverty_line, parameter = 2, type = "Foster")
+ineq::pov(incomes2, poverty_line, parameter = 3, type = "Foster")
+
+
+```
+
+
+```{r}
+
+ineq::ineq(incomes)
+ineq::Lc(incomes, plot = T)
+
+```
+
+
+```{r}
+ceosal1 %>% skimr::skim()
+lm(data = ceosal1,
+   formula = log(salary)~log(sales)+roe+finance+consprod+utility) %>%
+  summary()
+?ceosal1
+exp(-.283) - 1 
+exp(-.283)
+```
+
+
+```{r}
+gpa1 
+```
+
+
+
+```{r}
+hprice1 %>% 
+  filter(colonial == 1) %>%
+  ggplot(aes(x = sqrft, y = price))+
+    geom_point()
+
+
+```
+
+
+```{r}
+
+### BP Test
+reg <- gpa1 %>% 
+  lm(data = .,
+     formula = colGPA~I(hsGPA - mean(hsGPA)) + PC + I(skipped^2))
+reg %>% 
+  summary()
+
+reg_res <- reg$residuals
+gpa1_BP <- gpa1
+gpa1_BP$res_sq <- reg_res^2
+reg_second <- gpa1_BP %>%
+  lm(data = .,
+     formula = res_sq ~ I(hsGPA - mean(hsGPA)) + PC + I(skipped^2))
+sum_sec <- reg_second %>% summary()
+r_squared <- sum_sec$r.squared 
+F_value = (r_squared / 3) / ((1 - r_squared) / (nrow(gpa1 - 3 - 1)))
+F_stat = pf(q = F_value, df1 = 3, df2 = (nrow(gpa1 - 3 - 1)), lower.tail = F)
+F_stat
+
+                            
+
+```
+
+```{r}
+k401ksubs
+reg <- k401ksubs %>% 
+  lm(data = .,
+     formula = nettfa ~ inc + I((age-25)^2) + male + e401k,
+     weights = 1/inc,
+     subset = (fsize == 1)) 
+
+reg %>% 
+  coeftest()
+
+plot(reg$residuals)
+
+
+```
+
+
+```{r}
+smoke
+reg <- smoke %>% 
+  lm(data = .,
+     formula = cigs ~ lincome + lcigpric + educ + age + agesq + restaurn)
+bptest(reg)
+reg_res <- reg$residuals
+smoke2 <- smoke
+smoke2$res = log(reg_res^2)
+reg2 <- smoke2 %>% 
+  lm(data = ., 
+     formula = res ~ lincome + lcigpric + educ + age + agesq + restaurn)
+weight_val <- exp(reg2$fitted.values) 
+reg3 <- smoke %>% 
+  lm(data = .,
+     formula = cigs ~ lincome + lcigpric + educ + age + agesq + restaurn,
+     weights = (1 / weight_val))
+reg3 %>% summary()
+
+```
+
+```{r}
+
+reg <- wage2 %>% 
+  lm(data = .,
+     formula = wage ~ educ + I(educ^2) + exper + I(exper^2) + age + age^2 + married + black) 
+summary(reg)
+reg$residuals %>% plot()
+bptest(reg)
+
+
+```
+
+
+```{r}
+n_cat <- catholic %>% 
+  filter(cathhs == 1) %>% 
+  nrow()
+n_cat / 7430
+
+reg <- lm(data = catholic,
+          formula = math12 ~ cathhs + lfaminc + motheduc + fatheduc)
+reg %>% confint()
+
+coeftest(reg, vcov = vcovHC(reg, type = "HC0"))  
+
+reg_reduced <- lm(data = catholic,
+                     formula = cathhs ~ lfaminc + motheduc + fatheduc + parcath)
+reg_reduced %>% summary()
+
+reg_iv <- ivreg(data = catholic,
+                formula = math12 ~ cathhs | parcath +lfaminc + motheduc + fatheduc)
+reg_iv %>% summary()
+
+```
+
+
+```{r}
+wage2 %>%
+  lm(data = .,
+     formula = log(wage) ~ sibs) %>% 
+  summary()
+
+wage2 %>%
+  lm(data = .,
+     formula = educ ~ brthord) %>% 
+  summary()
+
+wage2 %>%
+  ivreg(data = .,
+     formula = log(wage) ~ educ | brthord) %>% 
+  summary()
+
+wage2 %>% 
+  lm(data = .,
+     formula = educ ~ sibs + brthord) %>% 
+  summary()
+
+library(ivreg)
+ivreg(log(wage) ~ sibs + educ |sibs + brthord, data = wage2) %>% summary()
+
+reg_educ <- lm(data = wage2,
+     formula = educ ~ sibs + brthord)
+
+cov(reg_educ$fitted.values, wage2$sibs[1:852])
+reg_educ$fitted.values
+wage2$sibs[1:852]
+
+
+```
+
+
+```{r}
+mroz
+reg_educ <- lm(educ~exper+I(exper^2)+motheduc+fatheduc, data = mroz)
+mroz$educ_fit=reg_educ$fitted.values
+reg_2sls <- lm(log(wage)~educ_fit+exper+I(exper^2), data = mroz)
+
+
+lm(reg_educ$residuals ~ mroz$exper+I(mroz$exper^2)+mroz$motheduc+mroz$fatheduc) %>% summary()
+
+
+
+```
+
+```{r}
+data("mroz")
+oursample <- subset(mroz, !is.na(wage))
+stage1 <- lm(educ ~ exper + I(exper^2) + motheduc + fatheduc, data = oursample)
+man.2SLS <- lm(log(wage) ~ fitted(stage1) + exper + I(exper^2), data = oursample)
+man.2SLS %>% summary() ## 2SLS
+
+aut.2SLS <- ivreg(log(wage) ~ educ + exper + I(exper^2) |
+                     motheduc + fatheduc + exper + I(exper^2),
+                  data = oursample)
+summary(aut.2SLS)
+
+res.2sls <- aut.2SLS$residuals
+res.2sls %>% summary()
+j_reg <- lm(res.2sls~oursample$exper+oursample$expersq+oursample$motheduc+oursample$fatheduc)
+j_reg %>% summary()
+J_stat <- 0.0008833 * nrow(oursample)
+J_stat %>% pchisq(df = 1, lower.tail = F)
+
+
+
+
+
+
+
+
+####
+coeftest(stage1)
+stage2 <- lm(log(wage) ~ educ + exper + I(exper^2) + resid(stage1), data = oursample)
+coeftest(stage2)
+# Benzeri cevabı veriyor lakin residual farklı
+lm(log(wage) ~ exper + I(exper^2) + fitted.values(stage1), data = oursample) %>% coeftest()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

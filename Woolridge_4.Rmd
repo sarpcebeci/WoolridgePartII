@@ -1,0 +1,188 @@
+---
+title: "Woolridge_4"
+output: html_document
+---
+
+### Problems
+
+```{r}
+## Problem 2 
+ceosal1
+reg <- lm(log(salary)~log(sales)+roe+ros, data = ceosal1)
+summary(reg)
+# ii
+0.0002417 * 50 * 100
+# iii
+t.test()
+
+```
+
+```{r}
+## Problem 3 
+rdchem
+reg <- lm(rdintens~log(sales)+profmarg, data = rdchem)
+summary(reg)
+
+0.32135 / 100 * 10 
+
+# iii
+
+
+```
+
+
+```{r}
+## Problem 4 
+rental90 <- rental %>% filter(year == 90)
+rental90
+reg <- lm(log(rent)~log(pop)+log(avginc)+pctstu, data = rental90)
+summary(reg)
+
+
+# iii
+
+
+```
+
+```{r}
+## Problem 4 
+gpa1
+reg <- lm(colGPA~hsGPA+ACT+skipped, data = gpa1)
+summary(reg)
+# i
+Z <- qnorm(.025, lower.tail = F)
+CI <- 0.41182 + c(-0.09367 * Z,
+                            0.09367 * Z)
+CI
+
+
+# iii
+
+
+```
+
+
+```{r}
+## Problem 6 
+hprice1
+reg <- lm(price~assess, data = hprice1)
+summary(reg)
+# i
+(.98 - 1)/.05
+# ii
+SSR_Restricted <- sum(
+  (hprice1$price - hprice1$assess)^2
+   )
+SSR_Unrestricted <- sum(
+  reg$residuals^2
+)
+??FDist
+(F_stat = ((SSR_Restricted - SSR_Unrestricted) / 2) / 
+  (SSR_Unrestricted / (nrow(hprice1) - 1 - 1)))
+pf(F_stat, 2, (nrow(hprice1) - 1 - 1), lower.tail = F)
+# iii
+R_ur <- .829
+R_r <- .820
+(F_stat = ((R_ur - R_r) / 3) / 
+  ((1 - R_ur) / (nrow(hprice1) - 4 - 1)))
+pf(F_stat, 3, (nrow(hprice1) - 4 - 1), lower.tail = F)
+
+
+```
+
+
+```{r}
+## Problem 7 
+(jtrain87 <- jtrain %>% filter(year == 1987))
+(jtrain87_union <- jtrain87 %>% filter(union == 0)) 
+reg <- lm(log(scrap)~hrsemp+log(sales)+log(employ), data = jtrain87)
+reg_union <- lm(log(scrap)~hrsemp+log(sales)+log(employ), data = jtrain87_union)
+summary(reg)
+summary(reg_union)
+# iii
+reg2 <- lm(log(scrap)~hrsemp+log(sales/employ)+log(employ), data = jtrain87)
+summary(reg2)
+#iv
+t_stat <- (-0.95064 + 1)/0.36984
+pt(t_stat, 39, lower.tail = F)
+```
+
+```{r}
+(sleep75)
+# i
+reg <- lm(sleep~totwrk+educ+age, data = sleep75)
+summary(reg)
+# ii
+reg2 <- lm(sleep~totwrk, data = sleep75)
+summary(reg2)
+#iii
+R_ur <- 0.1096 
+R_r <-  0.102 
+(F_stat = ((R_ur - R_r) / 2) / 
+  ((1 - R_ur) / (nrow(hprice1) - 3 - 1)))
+pf(F_stat, 2, (nrow(hprice1) - 3 - 1), lower.tail = F)
+
+
+```
+
+```{r}
+return
+reg <- lm(return~dkr+eps+netinc+salary, data = return)
+summary(reg)
+#df(1.408, 4, 137)
+reg2 <- lm(return~dkr+eps+log(netinc)+log(salary), data = return)
+summary(reg2)
+df(1.17, 4, 137)
+?return
+?ceosal2
+```
+
+
+```{r}
+library(stargazer)
+meap93
+reg <- lm(math10~lexpend, data = meap93)
+summary(reg)
+reg2 <- lm(math10~lexpend+lenroll+lnchprg, data = meap93)
+stargazer(list(reg, reg2), type = "text", 
+          keep.stat = c("n", "rsq"),
+          p.auto = T)
+
+```
+
+```{r}
+?meapsingle
+meapsingle
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
